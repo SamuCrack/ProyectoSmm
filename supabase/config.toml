@@ -1,0 +1,49 @@
+project_id = "ngunwpglgngokbqhwxgz"
+
+[functions.admin-ban-user-ip]
+verify_jwt = true
+
+[functions.admin-change-user-password]
+verify_jwt = true
+
+[functions.admin-create-user]
+verify_jwt = true
+
+[functions.admin-delete-user]
+verify_jwt = true
+
+[functions.provider-test-connection]
+verify_jwt = true
+
+[functions.provider-get-balance]
+verify_jwt = true
+
+[functions.provider-sync-services]
+verify_jwt = true
+
+[functions.provider-sync-descriptions]
+verify_jwt = true
+
+[functions.provider-create-order]
+verify_jwt = true
+
+[functions.provider-get-order-status]
+verify_jwt = true
+
+[functions.client-create-order]
+verify_jwt = true
+
+[functions.sync-order-statuses]
+verify_jwt = true
+
+[functions.provider-cancel-order]
+verify_jwt = true
+
+[functions.provider-refill-order]
+verify_jwt = true
+
+[functions.auto-sync-services]
+verify_jwt = false
+
+[functions.claim-migrated-account]
+verify_jwt = false

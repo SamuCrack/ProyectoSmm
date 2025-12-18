@@ -1,0 +1,2 @@
+ALTER TABLE service_categories 
+ALTER COLUMN icon TYPE VARCHAR(500);

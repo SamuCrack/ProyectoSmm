@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MoreVertical, Edit, Copy, Trash2, Power, PowerOff } from "lucide-react";
+import { MoreVertical, Edit, Copy, Trash2, Power, PowerOff, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -49,6 +49,8 @@ interface ServiceRowProps {
 
 const ServiceRow = ({ service, providerName, providerRate, onEdit, onUpdate, selected, onSelectChange }: ServiceRowProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showExtraConfirmDialog, setShowExtraConfirmDialog] = useState(false);
+  const [orderCount, setOrderCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const handleToggleStatus = async () => {
@@ -109,37 +111,46 @@ const ServiceRow = ({ service, providerName, providerRate, onEdit, onUpdate, sel
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async () => {
     try {
       setLoading(true);
       
-      // Verificar si hay órdenes asociadas a este servicio
-      const { data: orders, error: ordersError } = await supabase
+      // Contar órdenes asociadas
+      const { count, error: ordersError } = await supabase
         .from("orders")
-        .select("id")
-        .eq("service_id", service.id)
-        .limit(1);
+        .select("*", { count: 'exact', head: true })
+        .eq("service_id", service.id);
 
       if (ordersError) throw ordersError;
 
-      if (orders && orders.length > 0) {
-        toast.error(
-          "No se puede eliminar este servicio porque tiene órdenes asociadas. Considera deshabilitarlo en su lugar.",
-          { duration: 5000 }
-        );
-        setShowDeleteDialog(false);
-        return;
+      if (count && count > 0) {
+        setOrderCount(count);
+        setShowExtraConfirmDialog(true);
+      } else {
+        setShowDeleteDialog(true);
       }
+    } catch (error) {
+      console.error('Error checking orders:', error);
+      toast.error('Error al verificar órdenes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmSoftDelete = async () => {
+    try {
+      setLoading(true);
 
       const { error } = await supabase
         .from('services')
-        .delete()
+        .update({ deleted_at: new Date().toISOString(), enabled: false })
         .eq('id', service.id);
 
       if (error) throw error;
 
       toast.success('Servicio eliminado');
       setShowDeleteDialog(false);
+      setShowExtraConfirmDialog(false);
       onUpdate();
     } catch (error) {
       console.error('Error deleting service:', error);
@@ -151,7 +162,7 @@ const ServiceRow = ({ service, providerName, providerRate, onEdit, onUpdate, sel
 
   return (
     <>
-      <tr className="border-b border-border hover:bg-muted/30 transition-colors">
+      <tr className={`border-b border-border hover:bg-muted/30 transition-colors ${!service.enabled ? 'opacity-50' : ''}`}>
         <td className="p-3">
           <Checkbox
             checked={selected}
@@ -234,7 +245,7 @@ const ServiceRow = ({ service, providerName, providerRate, onEdit, onUpdate, sel
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => setShowDeleteDialog(true)}
+                onClick={handleDeleteClick}
                 className="text-destructive"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
@@ -245,18 +256,55 @@ const ServiceRow = ({ service, providerName, providerRate, onEdit, onUpdate, sel
         </td>
       </tr>
 
+      {/* Diálogo normal (sin órdenes) */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar servicio?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará el servicio "{service.name}".
+              Se eliminará el servicio "{service.name}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={loading}>
+            <AlertDialogAction onClick={confirmSoftDelete} disabled={loading}>
               Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo con advertencia extra (tiene órdenes) */}
+      <AlertDialog open={showExtraConfirmDialog} onOpenChange={setShowExtraConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-5 w-5" />
+              Servicio con órdenes asociadas
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p className="font-semibold text-foreground">
+                  Este servicio tiene {orderCount} orden(es) asociada(s).
+                </p>
+                <p>Al eliminar este servicio:</p>
+                <ul className="list-disc ml-4 text-sm space-y-1">
+                  <li>Las órdenes existentes mantendrán su historial</li>
+                  <li>El servicio desaparecerá de la lista</li>
+                  <li>Los reportes seguirán funcionando correctamente</li>
+                </ul>
+                <p className="font-medium">¿Deseas continuar?</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmSoftDelete} 
+              disabled={loading}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              Eliminar servicio
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

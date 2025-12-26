@@ -13,6 +13,7 @@ const ClientLogin = lazy(() => import("./pages/ClientLogin"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const ClientDashboard = lazy(() => import("./pages/client/ClientDashboard"));
+const PayPalReturn = lazy(() => import("./pages/client/PayPalReturn"));
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/client/dashboard" element={<ClientDashboard />} />
+            <Route path="/client/paypal-return" element={<PayPalReturn />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

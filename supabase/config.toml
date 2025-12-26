@@ -47,3 +47,9 @@ verify_jwt = false
 
 [functions.claim-migrated-account]
 verify_jwt = false
+
+[functions.paypal-set-checkout]
+verify_jwt = true
+
+[functions.paypal-execute-payment]
+verify_jwt = true

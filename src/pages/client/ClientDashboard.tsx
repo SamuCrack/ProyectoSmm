@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { renderIcon } from "@/lib/iconUtils";
 import UserRechargesModal from "@/components/admin/users/UserRechargesModal";
 import MobileOrderCard from "@/components/mobile/MobileOrderCard";
+import PayPalCheckoutSection from "@/components/client/PayPalCheckoutSection";
 // Icon map for dynamic menu items
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ShoppingCart,
@@ -1965,18 +1966,7 @@ const ClientDashboard = () => {
                       </TabsContent>
 
                       <TabsContent value="paypal" className="space-y-4">
-                        <div className="flex flex-col items-center p-6">
-                          <p className="text-sm text-muted-foreground mb-4">Añadir Saldo por PayPal - Mínimo 5 Dólares ( Automático )</p>
-                          <div className="space-y-4 w-full max-w-md">
-                            <div>
-                              <Label htmlFor="paypal-amount">Monto (USD)</Label>
-                              <Input id="paypal-amount" type="number" placeholder="Ingrese monto en USD" min="5" className="mt-1" />
-                            </div>
-                            <Button className="w-full" onClick={() => toast.info("PayPal estará disponible pronto")}>
-                              Pagar con PayPal
-                            </Button>
-                          </div>
-                        </div>
+                        <PayPalCheckoutSection />
                       </TabsContent>
 
                       <TabsContent value="binance" className="space-y-4">

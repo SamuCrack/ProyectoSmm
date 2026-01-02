@@ -974,8 +974,8 @@ const ServicesManagement = () => {
         onOpenChange={setShowMoveCategory}
         serviceIds={selectedServices}
         categories={categories
-          .filter(cat => cat.enabled)
-          .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+          .filter(cat => cat.enabled && services.some(s => s.category_id === cat.id))
+          .sort((a, b) => a.sort_order - b.sort_order)
         }
         onSuccess={() => {
           fetchDataSilent();

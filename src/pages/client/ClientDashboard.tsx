@@ -45,6 +45,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   FileText,
   Video,
   Settings,
+  MessageCircle,
 };
 
 const ClientDashboard = () => {
@@ -958,8 +959,9 @@ const ClientDashboard = () => {
         icon: iconMap[item.icon_name] || ShoppingCart,
         label: item.label,
         section: item.menu_key,
+        externalUrl: item.external_url || null,
       }))
-    : defaultSidebarItems;
+    : defaultSidebarItems.map(item => ({ ...item, externalUrl: null }));
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -992,10 +994,14 @@ const ClientDashboard = () => {
                 <button 
                   key={item.label} 
                   onClick={() => {
-                    handleSectionChange(item.section);
+                    if (item.externalUrl) {
+                      window.open(item.externalUrl, '_blank');
+                    } else {
+                      handleSectionChange(item.section);
+                    }
                     setMobileMenuOpen(false);
                   }} 
-                  className={`w-full flex items-center gap-2 px-4 py-3 text-sm transition-colors ${activeSection === item.section ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}
+                  className={`w-full flex items-center gap-2 px-4 py-3 text-sm transition-colors ${activeSection === item.section && !item.externalUrl ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}
                 >
                   <item.icon className="h-4 w-4" />
                   <span>{item.label}</span>
@@ -1034,10 +1040,22 @@ const ClientDashboard = () => {
 
         {/* Navigation */}
         <nav className="flex-1 py-2">
-          {sidebarItems.map(item => <button key={item.label} onClick={() => handleSectionChange(item.section)} className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${activeSection === item.section ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}>
+          {sidebarItems.map(item => (
+            <button 
+              key={item.label} 
+              onClick={() => {
+                if (item.externalUrl) {
+                  window.open(item.externalUrl, '_blank');
+                } else {
+                  handleSectionChange(item.section);
+                }
+              }} 
+              className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${activeSection === item.section && !item.externalUrl ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"}`}
+            >
               <item.icon className="h-4 w-4" />
               <span>{item.label}</span>
-            </button>)}
+            </button>
+          ))}
         </nav>
       </aside>
 

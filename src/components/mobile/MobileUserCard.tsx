@@ -21,6 +21,7 @@ interface User {
   created_at: string;
   last_auth?: string;
   last_ip?: string;
+  total_spent: number;
 }
 
 interface MobileUserCardProps {
@@ -76,6 +77,10 @@ const MobileUserCard = ({
           <div>
             <span className="text-muted-foreground text-xs block">Balance</span>
             <span className="font-semibold text-primary">${user.balance.toFixed(2)}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground text-xs block">Gastado</span>
+            <span className="font-semibold text-orange-500">${user.total_spent.toFixed(2)}</span>
           </div>
           <div>
             <span className="text-muted-foreground text-xs block">Descuento</span>

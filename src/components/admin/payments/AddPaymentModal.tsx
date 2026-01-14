@@ -101,6 +101,7 @@ const AddPaymentModal = ({
         payment_method: formData.payment_method,
         status: "Completed",
         notes: formData.memo || null,
+        previous_balance: user.balance,
       });
 
       if (rechargeError) throw rechargeError;

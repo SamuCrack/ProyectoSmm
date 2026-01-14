@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, History } from "lucide-react";
 import { toast } from "sonner";
 import {
   Select,
@@ -22,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import AddPaymentModal from "@/components/admin/payments/AddPaymentModal";
 import MobilePaymentCard from "@/components/mobile/MobilePaymentCard";
+import UserRechargesModal from "@/components/admin/users/UserRechargesModal";
 import { format } from "date-fns";
 
 interface Payment {
@@ -50,6 +51,7 @@ const PaymentsManagement = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterMethod, setFilterMethod] = useState<string>("all");
   const [showAddPayment, setShowAddPayment] = useState(false);
+  const [historyUserId, setHistoryUserId] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
@@ -219,12 +221,13 @@ const PaymentsManagement = () => {
                     <TableHead className="hidden lg:table-cell">Memo</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="hidden lg:table-cell">Updated</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredPayments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
+                      <TableCell colSpan={10} className="text-center py-8">
                         <p className="text-muted-foreground">No se encontraron pagos</p>
                       </TableCell>
                     </TableRow>
@@ -248,6 +251,16 @@ const PaymentsManagement = () => {
                         <TableCell className="hidden lg:table-cell whitespace-nowrap">
                           {format(new Date(payment.updated_at), "yyyy-MM-dd HH:mm")}
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setHistoryUserId(payment.user_id)}
+                            title="Ver historial de recargas"
+                          >
+                            <History className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -263,6 +276,12 @@ const PaymentsManagement = () => {
         onOpenChange={setShowAddPayment}
         onSuccess={fetchData}
         users={users}
+      />
+
+      <UserRechargesModal
+        userId={historyUserId}
+        open={!!historyUserId}
+        onOpenChange={(open) => !open && setHistoryUserId(null)}
       />
     </div>
   );

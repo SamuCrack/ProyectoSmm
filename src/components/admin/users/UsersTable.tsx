@@ -29,6 +29,7 @@ interface User {
   created_at: string;
   last_auth?: string;
   last_ip?: string;
+  total_spent: number;
 }
 
 interface UsersTableProps {
@@ -232,7 +233,7 @@ const UsersTable = ({ users, loading, onRefresh, onRefreshSilent, sortField, sor
                       {user.whatsapp || '-'}
                     </TableCell>
                     <TableCell>${user.balance.toFixed(5)}</TableCell>
-                    <TableCell className="hidden xl:table-cell">$0.00</TableCell>
+                    <TableCell className="hidden xl:table-cell">${user.total_spent.toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge 
                         variant={user.enabled ? "default" : "destructive"}

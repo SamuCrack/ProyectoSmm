@@ -19,6 +19,7 @@ interface UserData {
   created_at: string;
   last_auth?: string;
   last_ip?: string;
+  total_spent: number;
 }
 
 const UsersManagement = () => {
@@ -69,7 +70,30 @@ const UsersManagement = () => {
 
       if (error) throw error;
 
-      setUsers(data || []);
+      // Calculate total spent for each user
+      const userIds = (data || []).map(u => u.id);
+      let spentMap: Record<string, number> = {};
+      
+      if (userIds.length > 0) {
+        const { data: ordersData, error: ordersError } = await supabase
+          .from("orders")
+          .select("user_id, charge_user")
+          .in("user_id", userIds);
+        
+        if (!ordersError && ordersData) {
+          spentMap = ordersData.reduce((acc, order) => {
+            acc[order.user_id] = (acc[order.user_id] || 0) + (order.charge_user || 0);
+            return acc;
+          }, {} as Record<string, number>);
+        }
+      }
+
+      const usersWithSpent = (data || []).map(user => ({
+        ...user,
+        total_spent: spentMap[user.id] || 0
+      }));
+
+      setUsers(usersWithSpent);
       setTotalUsers(count || 0);
     } catch (error: any) {
       toast.error("Error al cargar usuarios: " + error.message);
@@ -107,7 +131,30 @@ const UsersManagement = () => {
       const { data, error, count } = await query;
       if (error) throw error;
 
-      setUsers(data || []);
+      // Calculate total spent for each user
+      const userIds = (data || []).map(u => u.id);
+      let spentMap: Record<string, number> = {};
+      
+      if (userIds.length > 0) {
+        const { data: ordersData, error: ordersError } = await supabase
+          .from("orders")
+          .select("user_id, charge_user")
+          .in("user_id", userIds);
+        
+        if (!ordersError && ordersData) {
+          spentMap = ordersData.reduce((acc, order) => {
+            acc[order.user_id] = (acc[order.user_id] || 0) + (order.charge_user || 0);
+            return acc;
+          }, {} as Record<string, number>);
+        }
+      }
+
+      const usersWithSpent = (data || []).map(user => ({
+        ...user,
+        total_spent: spentMap[user.id] || 0
+      }));
+
+      setUsers(usersWithSpent);
       setTotalUsers(count || 0);
     } catch (error: any) {
       console.error("Error fetching users:", error);

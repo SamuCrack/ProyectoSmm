@@ -12,6 +12,7 @@ interface Recharge {
   payment_method: string;
   notes: string;
   created_at: string;
+  previous_balance: number | null;
 }
 
 interface UserRechargesModalProps {
@@ -66,7 +67,9 @@ const UserRechargesModal = ({ userId, open, onOpenChange }: UserRechargesModalPr
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
+                <TableHead>Balance Anterior</TableHead>
                 <TableHead>Monto</TableHead>
+                <TableHead>Balance Nuevo</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Método</TableHead>
                 <TableHead>Notas</TableHead>
@@ -77,7 +80,15 @@ const UserRechargesModal = ({ userId, open, onOpenChange }: UserRechargesModalPr
               {recharges.map((recharge) => (
                 <TableRow key={recharge.id}>
                   <TableCell>#{recharge.id}</TableCell>
-                  <TableCell className="font-medium">${recharge.amount.toFixed(2)}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {recharge.previous_balance !== null ? `$${recharge.previous_balance.toFixed(2)}` : '-'}
+                  </TableCell>
+                  <TableCell className="font-medium text-green-600">+${recharge.amount.toFixed(2)}</TableCell>
+                  <TableCell className="font-semibold">
+                    {recharge.previous_balance !== null 
+                      ? `$${(recharge.previous_balance + recharge.amount).toFixed(2)}` 
+                      : '-'}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={recharge.status === 'Completed' ? 'default' : 'secondary'}>
                       {recharge.status}

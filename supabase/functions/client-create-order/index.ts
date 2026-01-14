@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       throw new Error('Rate limit exceeded. Maximum 50 orders per hour. Please try again later.');
     }
 
-    const { service_id, link, quantity } = await req.json();
+    const { service_id, link, quantity, comments } = await req.json();
 
     // Validate required fields
     if (!service_id || !link || !quantity) {
@@ -78,6 +78,21 @@ Deno.serve(async (req) => {
     }
     if (qty > service.max_qty) {
       throw new Error(`Quantity cannot exceed ${service.max_qty}`);
+    }
+
+    // Validate comments for Custom Comments services
+    if (service.service_type === 'Custom Comments') {
+      if (!comments || comments.trim().length === 0) {
+        throw new Error('Los comentarios son requeridos para este tipo de servicio');
+      }
+      if (comments.length > 10000) {
+        throw new Error('Los comentarios son demasiado largos (máximo 10,000 caracteres)');
+      }
+      // Validate that comment count matches quantity
+      const commentLines = comments.trim().split('\n').filter((c: string) => c.trim());
+      if (commentLines.length !== qty) {
+        throw new Error(`La cantidad de comentarios (${commentLines.length}) debe coincidir con la cantidad solicitada (${qty})`);
+      }
     }
 
     // Check for custom rate
@@ -156,6 +171,7 @@ Deno.serve(async (req) => {
         provider_id: service.provider_id,
         link: trimmedLink,
         quantity: qty,
+        comments: comments || null,
         charge_user: totalCost,
         cost_provider: service.provider ? (service.provider.rate_per_1000 * qty) / 1000 : 0,
         status: 'Pending'
@@ -188,18 +204,25 @@ Deno.serve(async (req) => {
     // If service has provider, submit order to external API
     if (service.provider_id && service.provider) {
       try {
+        const bodyParams: Record<string, string> = {
+          key: service.provider.api_key,
+          action: 'add',
+          service: service.provider_service_id || service_id.toString(),
+          link: trimmedLink,
+          quantity: qty.toString()
+        };
+
+        // Add comments if Custom Comments service
+        if (service.service_type === 'Custom Comments' && comments) {
+          bodyParams.comments = comments;
+        }
+
         const providerResponse = await fetch(service.provider.api_url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: new URLSearchParams({
-            key: service.provider.api_key,
-            action: 'add',
-            service: service.provider_service_id || service_id.toString(),
-            link: trimmedLink,
-            quantity: qty.toString()
-          }).toString()
+          body: new URLSearchParams(bodyParams).toString()
         });
 
         if (providerResponse.ok) {

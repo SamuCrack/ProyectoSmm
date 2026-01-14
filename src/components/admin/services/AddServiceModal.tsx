@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +38,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Info, Check, ChevronsUpDown, RefreshCw, Ban, Loader2, Search } from "lucide-react";
+import { Info, Check, ChevronsUpDown, RefreshCw, Ban, Loader2, Search, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -59,6 +60,7 @@ interface ProviderService {
   max_qty: number | null;
   refill: boolean | null;
   cancel_allow: boolean | null;
+  raw_data: Json | null;
 }
 
 const AddServiceModal = ({ open, onOpenChange, onSuccess, categories, providers }: AddServiceModalProps) => {
@@ -144,6 +146,10 @@ const AddServiceModal = ({ open, onOpenChange, onSuccess, categories, providers 
   const handleProviderServiceSelect = (serviceId: string) => {
     const service = providerServices.find(s => s.service_id === serviceId);
     if (service) {
+      // Extraer el tipo del raw_data del proveedor (cast seguro)
+      const rawData = service.raw_data as { type?: string } | null;
+      const providerType = rawData?.type || "Default";
+      
       setFormData(prev => ({
         ...prev,
         provider_service_id: service.service_id,
@@ -153,6 +159,7 @@ const AddServiceModal = ({ open, onOpenChange, onSuccess, categories, providers 
         max_qty: service.max_qty ? service.max_qty.toString() : prev.max_qty,
         refill: service.refill || false,
         cancel_allow: service.cancel_allow ?? true,
+        service_type: providerType, // Sincronizar tipo automáticamente desde el proveedor
       }));
 
       // Intentar encontrar y asignar la categoría si existe

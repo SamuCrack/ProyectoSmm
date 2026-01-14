@@ -69,6 +69,7 @@ const ClientDashboard = () => {
   const [pendingServiceId, setPendingServiceId] = useState<string | null>(null);
   const [link, setLink] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [comments, setComments] = useState("");
   const [serviceInfo, setServiceInfo] = useState<any>(null);
   const [customRates, setCustomRates] = useState<Record<number, number>>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -789,6 +790,20 @@ const ClientDashboard = () => {
         toast.error(`La cantidad debe estar entre ${serviceInfo?.min_qty} y ${serviceInfo?.max_qty}`);
         return;
       }
+
+      // Validación para Custom Comments
+      if (serviceInfo?.service_type === "Custom Comments") {
+        if (!comments.trim()) {
+          toast.error("Los comentarios son requeridos para este tipo de servicio");
+          return;
+        }
+        const commentLines = comments.trim().split('\n').filter(c => c.trim());
+        if (commentLines.length !== qty) {
+          toast.error(`La cantidad de comentarios (${commentLines.length}) debe coincidir con la cantidad solicitada (${qty})`);
+          return;
+        }
+      }
+
       const totalCost = parseFloat(calculateTotal());
 
       // Verificar saldo suficiente
@@ -805,7 +820,6 @@ const ClientDashboard = () => {
       }
 
       // Call secure edge function for atomic order creation
-      // This fixes both: input validation and client-side balance updates
       const {
         data,
         error
@@ -813,7 +827,8 @@ const ClientDashboard = () => {
         body: {
           service_id: parseInt(selectedService),
           link: trimmedLink,
-          quantity: qty
+          quantity: qty,
+          comments: serviceInfo?.service_type === "Custom Comments" ? comments.trim() : undefined
         }
       });
       if (error) {
@@ -840,6 +855,7 @@ const ClientDashboard = () => {
       // Limpiar formulario
       setLink("");
       setQuantity("");
+      setComments("");
       setSelectedService("");
       setSelectedCategory("");
       setServiceInfo(null);
@@ -1454,6 +1470,26 @@ const ClientDashboard = () => {
                                 Min: {serviceInfo.min_qty} - Max: {serviceInfo.max_qty.toLocaleString()}
                               </p>}
                           </div>
+
+                          {/* Custom Comments textarea */}
+                          {serviceInfo?.service_type === "Custom Comments" && (
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium text-foreground">
+                                Comentarios Personalizados *
+                              </Label>
+                              <Textarea
+                                value={comments}
+                                onChange={(e) => setComments(e.target.value)}
+                                placeholder="Ingresa un comentario por línea..."
+                                rows={5}
+                                className="bg-background border-border font-mono text-sm"
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                Ingresa los comentarios que deseas (uno por línea). 
+                                La cantidad de comentarios debe coincidir con la cantidad solicitada ({quantity || 0}).
+                              </p>
+                            </div>
+                          )}
 
                           <div className="flex items-center justify-between p-3 bg-accent/50 rounded-lg">
                             <span className="text-sm font-medium text-foreground">Cantidad Total</span>

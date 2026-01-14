@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       throw new Error('Rate limit exceeded. Maximum 50 orders per hour. Please try again later.');
     }
 
-    const { service_id, link, quantity, comments } = await req.json();
+    const { service_id, link, quantity, comments, poll_answer } = await req.json();
 
     // Validate required fields
     if (!service_id || !link || !quantity) {
@@ -92,6 +92,17 @@ Deno.serve(async (req) => {
       const commentLines = comments.trim().split('\n').filter((c: string) => c.trim());
       if (commentLines.length !== qty) {
         throw new Error(`La cantidad de comentarios (${commentLines.length}) debe coincidir con la cantidad solicitada (${qty})`);
+      }
+    }
+
+    // Validate poll_answer for Poll services
+    if (service.service_type === 'Poll') {
+      if (poll_answer === undefined || poll_answer === null) {
+        throw new Error('La opción de la encuesta es requerida para este tipo de servicio');
+      }
+      const answer = parseInt(poll_answer);
+      if (isNaN(answer) || answer < 1 || answer > 10) {
+        throw new Error('La opción de la encuesta debe ser un número entre 1 y 10');
       }
     }
 
@@ -172,6 +183,7 @@ Deno.serve(async (req) => {
         link: trimmedLink,
         quantity: qty,
         comments: comments || null,
+        poll_answer: service.service_type === 'Poll' ? parseInt(poll_answer) : null,
         charge_user: totalCost,
         cost_provider: service.provider ? (service.provider.rate_per_1000 * qty) / 1000 : 0,
         status: 'Pending'
@@ -215,6 +227,11 @@ Deno.serve(async (req) => {
         // Add comments if Custom Comments service
         if (service.service_type === 'Custom Comments' && comments) {
           bodyParams.comments = comments;
+        }
+
+        // Add answer if Poll service
+        if (service.service_type === 'Poll' && poll_answer) {
+          bodyParams.answer = poll_answer.toString();
         }
 
         const providerResponse = await fetch(service.provider.api_url, {

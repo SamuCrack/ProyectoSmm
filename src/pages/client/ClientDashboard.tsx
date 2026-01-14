@@ -70,6 +70,7 @@ const ClientDashboard = () => {
   const [link, setLink] = useState("");
   const [quantity, setQuantity] = useState("");
   const [comments, setComments] = useState("");
+  const [pollAnswer, setPollAnswer] = useState("");
   const [serviceInfo, setServiceInfo] = useState<any>(null);
   const [customRates, setCustomRates] = useState<Record<number, number>>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -804,6 +805,14 @@ const ClientDashboard = () => {
         }
       }
 
+      // Validación para Poll
+      if (serviceInfo?.service_type === "Poll") {
+        if (!pollAnswer) {
+          toast.error("Debes seleccionar una opción de la encuesta");
+          return;
+        }
+      }
+
       const totalCost = parseFloat(calculateTotal());
 
       // Verificar saldo suficiente
@@ -828,7 +837,8 @@ const ClientDashboard = () => {
           service_id: parseInt(selectedService),
           link: trimmedLink,
           quantity: qty,
-          comments: serviceInfo?.service_type === "Custom Comments" ? comments.trim() : undefined
+          comments: serviceInfo?.service_type === "Custom Comments" ? comments.trim() : undefined,
+          poll_answer: serviceInfo?.service_type === "Poll" ? parseInt(pollAnswer) : undefined
         }
       });
       if (error) {
@@ -856,6 +866,7 @@ const ClientDashboard = () => {
       setLink("");
       setQuantity("");
       setComments("");
+      setPollAnswer("");
       setSelectedService("");
       setSelectedCategory("");
       setServiceInfo(null);
@@ -1487,6 +1498,30 @@ const ClientDashboard = () => {
                               <p className="text-xs text-muted-foreground">
                                 Ingresa los comentarios que deseas (uno por línea). 
                                 La cantidad de comentarios debe coincidir con la cantidad solicitada ({quantity || 0}).
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Poll Answer selector */}
+                          {serviceInfo?.service_type === "Poll" && (
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium text-foreground">
+                                Opción de la Encuesta *
+                              </Label>
+                              <Select value={pollAnswer} onValueChange={setPollAnswer}>
+                                <SelectTrigger className="bg-background border-border">
+                                  <SelectValue placeholder="Selecciona la opción a votar" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((option) => (
+                                    <SelectItem key={option} value={option.toString()}>
+                                      Opción {option}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <p className="text-xs text-muted-foreground">
+                                Selecciona el número de opción de la encuesta que deseas votar (1-10).
                               </p>
                             </div>
                           )}
